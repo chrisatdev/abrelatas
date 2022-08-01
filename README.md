@@ -7,7 +7,7 @@
   ▒   ▒▒ ░▒░▒   ░   ░▒ ░ ▒░ ░ ░  ░░ ░ ▒  ░ ▒   ▒▒ ░   ░      ▒   ▒▒ ░░ ░▒  ░ ░\
   ░   ▒    ░    ░   ░░   ░    ░     ░ ░    ░   ▒    ░        ░   ▒   ░  ░  ░\
       ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░\
-                ░\
+                ░
 
 Script hecho en bash\
 para realizar fuerza Bruta\
