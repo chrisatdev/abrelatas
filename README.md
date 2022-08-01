@@ -9,7 +9,7 @@
       ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░    
                 ░                                                                
 
-Script hecho en bash... 
-para realizar fuerza Bruta...
-utilizar para fines educativos... 
+Script hecho en bash\
+para realizar fuerza Bruta\
+utilizar para fines educativos\ 
 o laborales
