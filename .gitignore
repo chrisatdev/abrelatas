@@ -1,2 +1,5 @@
 *.log
 reports/*.log
+.DS_Store
+.thumb
+.tmp

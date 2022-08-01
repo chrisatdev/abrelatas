@@ -9,4 +9,7 @@
       ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░  
                 ░                                                              
 
-Script para realizar fuerza Bruta
+Script hecho en bash 
+para realizar fuerza Bruta
+utilizar para fines educativos 
+o laborales

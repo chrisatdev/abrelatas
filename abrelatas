@@ -47,8 +47,11 @@ usage(){
   echo "       url          -u     URL de la victima."
 	echo "       delay        -s     El tiempo en segundos que va a tardar en ejecutar el siguiente ataque."
 	echo "       method       -m     Metodo a utilizar POST por defecto."
-	echo "       payload      -p     El payload que se va a enviar por el metodo."
-	echo "       archivo      -a     Archivo payload en lugar de usar -p."
+	echo "       payload      -p     El payload que se va a enviar por el metodo seleccionado."
+	echo "                           Donde va el campo clave o password usar la palabra comodin ABRIR."
+	echo "                           Ejemplo: username=admin&password=ABRIR"
+	echo
+  echo "       archivo      -a     Archivo payload en lugar de usar -p."
 	echo "       version      -v     Muestra la version instalada."
 	echo
 	echo -e "${endColor}"
