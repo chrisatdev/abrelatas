@@ -6,7 +6,7 @@ utilizar para fines educativos\
 o laborales
 
 ```bash
-Script de Fuerza Bruta creado por Chris
+Script de Fuerza Bruta creado por cbenitez10
 
 uso: abrelatas <opcion>
 

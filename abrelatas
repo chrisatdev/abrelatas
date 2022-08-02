@@ -32,7 +32,7 @@ usage(){
       ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░  
                 ░                                                              \n"
 
-  echo -e "${greenColor}Script de Fuerza Bruta creado por Chris";
+  echo -e "${greenColor}Script de Fuerza Bruta creado por cbenitez10";
   echo -e "${yellowColor}";
   echo -e "uso: abrelatas <opcion>"
 	echo
@@ -55,13 +55,6 @@ usage(){
 	echo "       version      -v     Muestra la version instalada."
 	echo
 	echo -e "${endColor}"
-}
-
-# Controlar la salida
-trap ctrl_c INT
-ctrl_c(){
-	echo -e "\n${redColor}[*] Saliendo...${endColor}"
-	exit 1
 }
 
 # Main function 
@@ -201,6 +194,13 @@ rangeAttack(){
 # end Range
 
 ####################
+# Controlar la salida
+trap ctrl_c INT
+ctrl_c(){
+	echo -e "\n${redColor}[*] Saliendo...${endColor}"
+	exit 1
+}
+
 # getName
 setFileName(){
   local URL=$1
@@ -209,7 +209,6 @@ setFileName(){
   setName="${setName}-${_DATE}.log"
   echo $setName 
 }
-
 
 # error Message
 errorMessage(){
