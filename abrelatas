@@ -105,6 +105,10 @@ main() {
       v )
         echo "\n${blueColor}[*] Version: ${VERSION}${endColor}"
         ;;
+      \? )
+        echo "Invalid Option: -$OPTARG" 1>&2
+        exit 1
+        ;;
       * )
         usage
         exit 1
@@ -138,19 +142,22 @@ dictionaryAttack(){
   fi
   
   echo -e "${greenColor}[*] Iniciando ataque ${endColor}"
-  
+
   configHeader
   payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
   payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
-  
+  fileName=$(setFileName $targetUrl)
+ 
   while read  -r  line; do
     dataRaw="${payload1}${line}${payload2}"
     # echo "curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
     result=$(curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
+    echo $result >> $fileName
     echo -e $result
     setSleep
   done < $filePath
   echo -e "${greenColor}[*] Ataque culminado ${endColor}"
+  echo -e "${yellowColor}[*] Datos guardados en el archivo: ${greenColor}$fileName ${endColor}"
 }
 # end Range
 
@@ -178,19 +185,32 @@ rangeAttack(){
   configHeader 
   payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
   payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
+  fileName=$(setFileName $targetUrl)
   
   for (( c=$rangeFrom; c<=$rangeTo; c++ )); do
     dataRaw="${payload1}${c}${payload2}"
     # echo "curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
     result=$(curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
+    echo $result >> $fileName
     echo -e $result
     setSleep  
   done
   echo -e "${greenColor}[*] Ataque culminado ${endColor}"
+  echo -e "${yellowColor}[*] Datos guardados en el archivo: ${greenColor}$fileName ${endColor}"
 }
 # end Range
 
 ####################
+# getName
+setFileName(){
+  local URL=$1
+  local setName=$(echo $URL | awk -F'//' '{print $2}' | awk -F'/' '{print $1}')
+  local _DATE=$(date +"%Y%m%d")
+  setName="${setName}-${_DATE}.log"
+  echo $setName 
+}
+
+
 # error Message
 errorMessage(){
   echo -e "\n${redColor}[!] $1 ${endColor}\n"
