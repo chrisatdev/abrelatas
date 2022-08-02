@@ -1,4 +1,4 @@
-[Abrelatas](https://raw.githubusercontent.com/cbenitez/abrelatas/master/image.png)
+![Abrelatas](image.png?)
 
 Script hecho en bash\
 para realizar fuerza Bruta\
