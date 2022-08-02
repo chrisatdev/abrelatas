@@ -1,4 +1,4 @@
-[Abrelatas](image.png)
+[Abrelatas](image.png?)
 
 Script hecho en bash\
 para realizar fuerza Bruta\
