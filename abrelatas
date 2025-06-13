@@ -1,9 +1,10 @@
 #!/bin/bash
 
 ####################################
-# Creado por cbenitez10
+# Creado por chrisatdev
 # Script creado con fines educativos
 # y/o laborales
+# https://github.com/chrisatdev/abrelatas
 #####################################
 
 VERSION="0.1.0"
@@ -46,7 +47,7 @@ usage() {
       ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░  
                 ░                                                              \n"
 
-  echo -e "${colors[green]}Script de Fuerza Bruta${colors[end]}"
+  echo -e "${colors[green]}Abrelatas Script de Fuerza Bruta por chrisatdev${colors[end]}"
   echo -e "${colors[yellow]}"
   echo -e "Uso: abrelatas [opciones]"
   echo
