@@ -1,8 +1,3 @@
-![Abrelatas](image.png?)
-
-# README.md para Abrelatas
-
-````markdown
 # 🔓 Abrelatas - Herramienta de Fuerza Bruta Avanzada
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,6 +13,7 @@ cd abrelatas
 chmod +x abrelatas
 sudo mv abrelatas /usr/local/bin/  # Opcional para instalación global
 ```
+
 ````
 
 ## 🚀 Características Principales
@@ -121,3 +117,4 @@ MIT License - Ver archivo [LICENSE](LICENSE) para más detalles.
 ---
 
 Desarrollado con ❤️ por [chrisatdev](https://github.com/chrisatdev) - ¡Contribuciones son bienvenidas!
+````
