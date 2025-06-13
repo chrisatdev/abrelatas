@@ -3,8 +3,7 @@
 ####################################
 # Creado por cbenitez10
 # Script creado con fines educativos
-# y laborales
-# Versión mejorada con sugerencias
+# y/o laborales
 #####################################
 
 VERSION="0.1.0"
@@ -47,7 +46,7 @@ usage() {
       ░  ░ ░         ░        ░  ░    ░  ░     ░  ░              ░  ░      ░  
                 ░                                                              \n"
 
-  echo -e "${colors[green]}Script de Fuerza Bruta mejorado${colors[end]}"
+  echo -e "${colors[green]}Script de Fuerza Bruta${colors[end]}"
   echo -e "${colors[yellow]}"
   echo -e "Uso: abrelatas [opciones]"
   echo
