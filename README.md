@@ -14,8 +14,6 @@ chmod +x abrelatas
 sudo mv abrelatas /usr/local/bin/  # Opcional para instalación global
 ```
 
-````
-
 ## 🚀 Características Principales
 
 - ✅ Soporte para múltiples tipos de ataque (diccionario/rango numérico)
@@ -117,4 +115,3 @@ MIT License - Ver archivo [LICENSE](LICENSE) para más detalles.
 ---
 
 Desarrollado con ❤️ por [chrisatdev](https://github.com/chrisatdev) - ¡Contribuciones son bienvenidas!
-````
