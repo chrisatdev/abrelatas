@@ -232,13 +232,17 @@ process_results() {
     local attempt="$1"
     local response="$2"
     
-    local content=$(echo "$response" | sed '/HTTP_CODE:/,$d')
-    local http_code=$(echo "$response" | grep 'HTTP_CODE:' | cut -d: -f2)
-    local time_total=$(echo "$response" | grep 'TIME_TOTAL:' | cut -d: -f2)
+    # Extraer componentes de la respuesta
+    local content=$(echo "$response" | sed '/^HTTP_CODE:/,$d')
+    local http_code=$(echo "$response" | grep '^HTTP_CODE:' | cut -d: -f2)
+    local time_total=$(echo "$response" | grep '^TIME_TOTAL:' | cut -d: -f2)
     
+    # Valores por defecto si no se encuentran
+    http_code=${http_code:-"N/A"}
+    time_total=${time_total:-"N/A"}
     local content_length=$(echo -n "$content" | wc -c)
     
-    # Mostrar resultados
+    # Mostrar resultados según modo verboso
     if [[ "$verbose" -eq 1 ]]; then
         echo -e "\n${colors[purple]}=== Intento: $attempt ===${colors[end]}"
         echo "$content"
@@ -249,12 +253,6 @@ process_results() {
     
     # Guardar en archivo
     echo "$(date +"%Y-%m-%d %H:%M:%S") | $attempt | $http_code | $time_total | $content_length | $content" >> "$output_file"
-    
-    # Verificar si fue exitoso (puedes personalizar esta lógica)
-    if [[ "$http_code" -eq 200 ]] && [[ "$content_length" -lt 1000 ]]; then
-        echo -e "${colors[green]}¡Posible éxito! Intento: $attempt${colors[end]}"
-        echo "¡Posible éxito! Intento: $attempt | Código: $http_code | Longitud: $content_length" >> "${output_file}.success"
-    fi
 }
 
 # Ataque por diccionario
@@ -268,7 +266,7 @@ dictionary_attack() {
     
     while read -r line; do
         ((current_line++))
-        echo -ne "${colors[gray]}Progreso: $current_line/$total_lines (${((current_line*100/total_lines))}%)${colors[end]}\r"
+        echo -ne "${colors[gray]}Progreso: $current_line/$total_lines ($(( (current_line*100)/total_lines ))%${colors[end]}\r"
         
         local response=$(send_request "$line")
         process_results "$line" "$response"
